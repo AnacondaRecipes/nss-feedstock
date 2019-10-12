@@ -12,6 +12,8 @@ source:
   patches:
     # Adds auto-generated nss.pc and nss-config script, and allows building without nspr in the source tree 
     - nss-3.39-standalone-1.patch
+    - 0002-Use-AR-in-makefiles.patch
+
 
 build:
   number: 0
@@ -24,6 +26,7 @@ requirements:
     - {{ compiler('cxx') }}
     - autoconf
     - cmake
+    - make  # [unix]
     - pkg-config
     
   host:
