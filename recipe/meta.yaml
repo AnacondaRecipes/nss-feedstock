@@ -19,6 +19,8 @@ build:
   number: 0
   skip: true  # [win]
   skip: true  # [osx and c_compiler == "toolchain_c"]
+  ignore_run_exports:
+    - zlib
 
 requirements:
   build:
@@ -28,7 +30,8 @@ requirements:
     - cmake
     - make  # [unix]
     - pkg-config
-    
+    - patch
+   
   host:
     - nspr 4.22
     - sqlite
