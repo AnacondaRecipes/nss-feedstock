@@ -8,7 +8,7 @@ package:
 source:
   fn: nss-{{ version }}.tgz
   url: https://ftp.mozilla.org/pub/security/nss/releases/NSS_{{ version_us }}_RTM/src/nss-{{ version }}.tar.gz
-  sha256: 3bf7e0ed7db98803f134c527c436cc68415ff17257d34bd75de14e9a09d13651
+  sha256: 88928811f9f40f87d42e2eaccdf6e454562e51486067f2ddbe90aa47ea6cd056
   patches:
     # Adds auto-generated nss.pc and nss-config script, and allows building without nspr in the source tree 
     - nss-3.39-standalone-1.patch
