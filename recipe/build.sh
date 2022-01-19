@@ -39,6 +39,7 @@ make -j1 BUILD_OPT=1 \
     NS_USE_GCC=$USE_GCC \
     MACOS_SDK_DIR=$MACOS_SDK_DIR \
     $MACOS_CROSS_ARGS \
+    AR_PROGRAM=${AR} \
     all latest
 
 cd ../dist
