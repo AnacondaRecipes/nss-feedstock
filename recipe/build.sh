@@ -8,9 +8,6 @@ if [[ ${HOST} =~ .*darwin.* ]]; then
     if [[ "${target_platform}" == "osx-arm64" ]]; then
         MACOS_CROSS_ARGS="CPU_ARCH=arm NATIVE_CC=$CC_FOR_BUILD NATIVE_FLAGS=-O2"
     fi
-    if [[ "$CONDA_BUILD_CROSS_COMPILATION" == "1" ]]; then
-        MACOS_CROSS_ARGS="${MACOS_CROSS_ARGS} CROSS_COMPILE=1"
-    fi
 elif [[ ${HOST} =~ .*linux.* ]]; then
     USE_GCC=1
 fi
