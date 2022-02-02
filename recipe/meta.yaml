@@ -42,7 +42,7 @@ requirements:
     - zlib
   run:
     # remove nspr when run exports is added
-    - nspr
+    - nspr >=4.33,<5
 
 test:
   commands:
