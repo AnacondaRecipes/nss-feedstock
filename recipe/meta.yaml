@@ -1,4 +1,4 @@
-{% set version = "3.46.1" %}
+{% set version = "3.74" %}
 {% set version_us = version.replace(".", "_") %}
 
 package:
@@ -8,17 +8,22 @@ package:
 source:
   fn: nss-{{ version }}.tgz
   url: https://ftp.mozilla.org/pub/security/nss/releases/NSS_{{ version_us }}_RTM/src/nss-{{ version }}.tar.gz
-  sha256: 3bf7e0ed7db98803f134c527c436cc68415ff17257d34bd75de14e9a09d13651
+  sha256: 88928811f9f40f87d42e2eaccdf6e454562e51486067f2ddbe90aa47ea6cd056
   patches:
     # Adds auto-generated nss.pc and nss-config script, and allows building without nspr in the source tree 
-    - nss-3.39-standalone-1.patch
+    - nss-3.55-standalone-1.patch
+    # Remove simd acceleration on osx-arm64
+    - remove_hw_accel_osxarm64.patch  # [osx and arm64]
+    # To fix an error when ar is not found
     - 0002-Use-AR-in-makefiles.patch
 
 
 build:
   number: 0
-  skip: true  # [win]
-  skip: true  # [osx and c_compiler == "toolchain_c"]
+  # nss and its dependency nspr aren't currently available on s390x
+  skip: true  # [win or s390x]
+  run_exports:
+    - {{ pin_subpackage('nss', max_pin='x') }}
   ignore_run_exports:
     - zlib
 
@@ -31,16 +36,13 @@ requirements:
     - make  # [unix]
     - pkg-config
     - patch
-   
   host:
-    - nspr 4.22
+    - nspr
     - sqlite
     - zlib
-
   run:
-    - {{ pin_compatible('nspr', max_pin='x') }}
-    - sqlite
-    - zlib
+    # remove nspr when run exports is added
+    - nspr >=4.33,<5
 
 test:
   commands:
@@ -56,7 +58,8 @@ test:
 
 about:
   home: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS
-  license: MPL 2
+  license: MPL-2.0
+  license_family: OTHER
   license_file: nss/COPYING
   summary: A set of libraries designed to support cross-platform development of security-enabled client and server applications.
   description: |
