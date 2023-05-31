@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd nss
+cd nss || exit 1
 
 if [[ ${HOST} =~ .*darwin.* ]]; then
     USE_GCC=0
@@ -39,9 +39,12 @@ make -j1 BUILD_OPT=1 \
     AR_PROGRAM=${AR} \
     all latest
 
-cd ../dist
+cd ../dist || exit 1
 
-FOLDER=$(<latest)
+FOLDER=$(cat latest)
+if [[ "${FOLDER}" == "" ]]; then
+    exit 1
+fi
 install -v -m755 ${FOLDER}/lib/*${SHLIB_EXT}  "${PREFIX}/lib"
 if [[ "${CONDA_BUILD_CROSS_COMPILATION}" != "1" ]]; then
     install -v -m644 ${FOLDER}/lib/*.chk "${PREFIX}/lib"
