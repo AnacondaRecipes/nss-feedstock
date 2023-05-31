@@ -19,8 +19,7 @@ source:
 
 build:
   number: 0
-  # nss and its dependency nspr aren't currently available on s390x
-  skip: true  # [win or s390x]
+  skip: true  # [win]
   run_exports:
     - {{ pin_subpackage('nss', max_pin='x') }}
 
