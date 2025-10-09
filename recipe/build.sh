@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd nss || exit 1
+cd $SRC_DIR/nss
 
 if [[ ${HOST} =~ .*darwin.* ]]; then
     USE_GCC=0
@@ -31,15 +31,14 @@ make -j1 BUILD_OPT=1 \
     NSS_USE_SYSTEM_SQLITE=1 \
     NSDISTMODE=copy \
     NO_MDUPDATE=1 \
-    NSS_DISABLE_GTESTS=1 \
+    NSS_DISABLE_GTESTS=0 \
     NSS_GYP_PREFIX=$PREFIX \
     NS_USE_GCC=$USE_GCC \
     MACOS_SDK_DIR=$MACOS_SDK_DIR \
     $MACOS_CROSS_ARGS \
-    AR_PROGRAM=${AR} \
     all latest
 
-cd ../dist || exit 1
+cd $SRC_DIR/dist
 
 FOLDER=$(cat latest)
 if [[ "${FOLDER}" == "" ]]; then
@@ -57,3 +56,6 @@ chmod -v 644 ${PREFIX}/include/nss/*
 install -v -m755 ${FOLDER}/bin/{certutil,nss-config,pk12util} "${PREFIX}/bin"
 
 install -v -m644 ${FOLDER}/lib/pkgconfig/nss.pc  "${PREFIX}/lib/pkgconfig"
+
+cd $SRC_DIR/nss/tests/gtests
+./gtests.sh

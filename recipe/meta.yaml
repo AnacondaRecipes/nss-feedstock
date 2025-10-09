@@ -1,21 +1,18 @@
-{% set version = "3.89.1" %}
-{% set version_us = version.replace(".", "_") %}
+{% set name = "nss" %}
+{% set version = "3.117" %}
 
 package:
-  name: nss
+  name: {{ name }}
   version: {{ version }}
 
 source:
-  url: https://ftp.mozilla.org/pub/security/nss/releases/NSS_{{ version_us }}_RTM/src/nss-{{ version }}.tar.gz
-  sha256: 3adaedb9e70c3c5f40603bf60a01e336190a6dbe01929d395f16b01fe84a0156
+  url: https://ftp.mozilla.org/pub/security/{{ name }}/releases/NSS_{{ version.replace('.', '_')}}_RTM/src/{{ name }}-{{ version }}.tar.gz
+  sha256: 5786b523a2f2e9295ed10d711960d2e33cd620bb80d6288443eda43553a51996
   patches:
     # Adds auto-generated nss.pc and nss-config script, and allows building without nspr in the source tree 
     - nss-3.55-standalone-1.patch
     # Remove simd acceleration on osx-arm64
     - remove_hw_accel_osxarm64.patch  # [osx and arm64]
-    # To fix an error when ar is not found
-    - 0002-Use-AR-in-makefiles.patch
-
 
 build:
   number: 0
@@ -31,12 +28,11 @@ requirements:
     - cmake
     - make  # [unix]
     - pkg-config
-    - patch
-    - sysroot_linux-64 2.17  # [linux64]
+    - gtest
   host:
-    - nspr 4.35
-    - sqlite 3.41.2
-    - zlib 1.2.13
+    - nspr 4.37
+    - sqlite 3.50.2
+    - zlib 1.3.1
 
 test:
   commands:
@@ -69,3 +65,5 @@ extra:
   recipe-maintainers:
     - marcelotrevisani
     - jakirkham
+  skip-lints:
+    - should_use_stdlib
