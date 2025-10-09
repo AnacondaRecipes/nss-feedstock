@@ -57,5 +57,9 @@ install -v -m755 ${FOLDER}/bin/{certutil,nss-config,pk12util} "${PREFIX}/bin"
 
 install -v -m644 ${FOLDER}/lib/pkgconfig/nss.pc  "${PREFIX}/lib/pkgconfig"
 
+export HOST=nss
+export DOMSUF=local
+export NSS_CYCLES=standard
+
 cd $SRC_DIR/nss/tests/gtests
 ./gtests.sh
