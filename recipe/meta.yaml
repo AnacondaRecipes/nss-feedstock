@@ -22,6 +22,7 @@ build:
 
 requirements:
   build:
+    - {{ stdlib('c') }}
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
     - autoconf
@@ -65,5 +66,3 @@ extra:
   recipe-maintainers:
     - marcelotrevisani
     - jakirkham
-  skip-lints:
-    - should_use_stdlib
