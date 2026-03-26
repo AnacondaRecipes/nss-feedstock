@@ -1,5 +1,5 @@
 {% set name = "nss" %}
-{% set version = "3.117" %}
+{% set version = "3.121" %}
 
 package:
   name: {{ name }}
@@ -7,12 +7,12 @@ package:
 
 source:
   url: https://ftp.mozilla.org/pub/security/{{ name }}/releases/NSS_{{ version.replace('.', '_')}}_RTM/src/{{ name }}-{{ version }}.tar.gz
-  sha256: 5786b523a2f2e9295ed10d711960d2e33cd620bb80d6288443eda43553a51996
+  sha256: cb3a8f8781bea78b7b8edd3afb7a2cb58e4881bb0160d189a39b98216ba7632e
   patches:
     # Adds auto-generated nss.pc and nss-config script, and allows building without nspr in the source tree 
-    - nss-3.55-standalone-1.patch
+    # - patches/nss-3.55-standalone-1.patch
     # Remove simd acceleration on osx-arm64
-    - remove_hw_accel_osxarm64.patch  # [osx and arm64]
+    - patches/remove_hw_accel_osxarm64.patch  # [osx and arm64]
 
 build:
   number: 0
@@ -52,7 +52,9 @@ about:
   license: MPL-2.0
   license_family: OTHER
   license_file: nss/COPYING
-  summary: A set of libraries designed to support cross-platform development of security-enabled client and server applications.
+  summary: |
+    A set of libraries designed to support cross-platform development of 
+    security-enabled client and server applications.
   description: |
     Network Security Services (NSS) is a set of libraries designed to support
     cross-platform development of security-enabled client and server
