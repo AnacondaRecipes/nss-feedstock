@@ -10,9 +10,9 @@ source:
   sha256: cb3a8f8781bea78b7b8edd3afb7a2cb58e4881bb0160d189a39b98216ba7632e
   patches:
     # Adds auto-generated nss.pc and nss-config script, and allows building without nspr in the source tree 
-    # - patches/nss-3.55-standalone-1.patch
+    - nss-3.55-standalone-1.patch
     # Remove simd acceleration on osx-arm64
-    - patches/remove_hw_accel_osxarm64.patch  # [osx and arm64]
+    - remove_hw_accel_osxarm64.patch  # [osx and arm64]
 
 build:
   number: 0
@@ -24,28 +24,73 @@ requirements:
   build:
     - {{ stdlib('c') }}
     - {{ compiler('c') }}
-    - {{ compiler('cxx') }}
     - autoconf
     - cmake
     - make  # [unix]
     - pkg-config
     - gtest
   host:
-    - nspr 4.37
-    - sqlite 3.50.2
-    - zlib 1.3.1
+    - nspr {{ nspr }}
+    - sqlite {{ sqlite }}
+    - zlib {{ zlib }}
 
 test:
+  requires:
+    - pkg-config
   commands:
-    - test -f ${PREFIX}/lib/libnspr4${SHLIB_EXT}
-    - test -f ${PREFIX}/lib/libplds4${SHLIB_EXT}
-    - test -f ${PREFIX}/lib/libplc4${SHLIB_EXT}
-    - test -f ${PREFIX}/lib/libsoftokn3${SHLIB_EXT}
-    - test -f ${PREFIX}/lib/libsoftokn3.chk
-    - test -f ${PREFIX}/lib/libnss3${SHLIB_EXT}
-    - test -f ${PREFIX}/lib/libsmime3${SHLIB_EXT}
-    - test -f ${PREFIX}/lib/libssl3${SHLIB_EXT}
-    - test -f ${PREFIX}/lib/libnssckbi${SHLIB_EXT}
+    - mkdir -p ./nssdb
+
+    - echo "== libraries =="
+    - test -f "${PREFIX}/lib/libfreebl3.chk"
+    - test -f "${PREFIX}/lib/libfreebl3${SHLIB_EXT}"
+    - test -f "${PREFIX}/lib/libnss3${SHLIB_EXT}"
+    - test -f "${PREFIX}/lib/libnssckbi-testlib${SHLIB_EXT}"
+    - test -f "${PREFIX}/lib/libnssckbi${SHLIB_EXT}"
+    - test -f "${PREFIX}/lib/libnssdbm3.chk"
+    - test -f "${PREFIX}/lib/libnssdbm3${SHLIB_EXT}"
+    - test -f "${PREFIX}/lib/libnssutil3${SHLIB_EXT}"
+    - test -f "${PREFIX}/lib/libsmime3${SHLIB_EXT}"
+    - test -f "${PREFIX}/lib/libsoftokn3.chk"
+    - test -f "${PREFIX}/lib/libsoftokn3${SHLIB_EXT}"
+    - test -f "${PREFIX}/lib/libssl3${SHLIB_EXT}"
+    - test -f "${PREFIX}/lib/pkgconfig/nss.pc"
+
+    - echo "== headers =="
+    - test -f "${PREFIX}/include/nss/cert.h"
+    - test -f "${PREFIX}/include/nss/certdb.h"
+    - test -f "${PREFIX}/include/nss/cryptohi.h"
+    - test -f "${PREFIX}/include/nss/keyhi.h"
+    - test -f "${PREFIX}/include/nss/nss.h"
+    - test -f "${PREFIX}/include/nss/nssutil.h"
+    - test -f "${PREFIX}/include/nss/pk11pub.h"
+    - test -f "${PREFIX}/include/nss/pkcs11.h"
+    - test -f "${PREFIX}/include/nss/secasn1.h"
+    - test -f "${PREFIX}/include/nss/secerr.h"
+    - test -f "${PREFIX}/include/nss/secitem.h"
+    - test -f "${PREFIX}/include/nss/secmod.h"
+    - test -f "${PREFIX}/include/nss/secoid.h"
+    - test -f "${PREFIX}/include/nss/ssl.h"
+    - test -f "${PREFIX}/include/nss/sslerr.h"
+    - test -f "${PREFIX}/include/nss/sslproto.h"
+
+    - echo "== binaries exist =="
+    - test -x "${PREFIX}/bin/certutil"
+    - test -x "${PREFIX}/bin/nss-config"
+    - test -x "${PREFIX}/bin/pk12util"
+
+    - echo "== binaries run =="
+    - echo "-- core tests"
+    - certutil -N -d sql:./nssdb --empty-password
+    - test -f ./nssdb/cert9.db
+    - test -f ./nssdb/key4.db
+    - test -f ./nssdb/pkcs11.txt
+    - certutil -L -d sql:./nssdb
+    - nss-config --version
+    - nss-config --libs
+    - nss-config --cflags
+    - pkg-config --exists nss
+    - pkg-config --modversion nss
+    - pk12util -v || true
 
 about:
   home: https://firefox-source-docs.mozilla.org/security/nss/index.html
