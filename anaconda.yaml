@@ -1,4 +1,7 @@
 anaconda_config_version: 1
 upstream_sources:
-  - pypi:
-      identifier: nss
+  - webpage:
+      url: https://archive.mozilla.org/pub/security/nss/releases/
+      regex: NSS_([\d_]+)_RTM
+      from_pattern: ^(\d+)_(\d+)(?:_(\d+))?$
+      to_pattern: \1.\2.\3
