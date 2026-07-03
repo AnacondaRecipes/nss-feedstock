@@ -3,5 +3,5 @@ upstream_sources:
   - webpage:
       url: https://archive.mozilla.org/pub/security/nss/releases/
       regex: NSS_([\d_]+)_RTM
-      from_pattern: ^(\d+)_(\d+)(?:_(\d+))?$
-      to_pattern: \1.\2.\3
+      from_pattern: _
+      to_pattern: .
