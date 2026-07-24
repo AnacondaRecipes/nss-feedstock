@@ -48,7 +48,6 @@ install -v -m755 ${FOLDER}/lib/*${SHLIB_EXT}  "${PREFIX}/lib"
 if [[ "${CONDA_BUILD_CROSS_COMPILATION}" != "1" ]]; then
     install -v -m644 ${FOLDER}/lib/*.chk "${PREFIX}/lib"
 fi
-install -v -m644 ${FOLDER}/lib/libcrmf.a "${PREFIX}/lib"
 
 install -v -m755 -d "${PREFIX}/include/nss"
 cp -v -RL {public,private}/nss/* "${PREFIX}/include/nss"
