@@ -9,8 +9,8 @@ source:
   url: https://ftp.mozilla.org/pub/security/{{ name }}/releases/NSS_{{ version.replace('.', '_')}}_RTM/src/{{ name }}-{{ version }}.tar.gz
   sha256: b1dbc1d9e7f3f8455dfb6d58ec8f7229d8a8450c629a9e69ef2ef6081f359056
   patches:
-    # Adds auto-generated nss.pc and nss-config script, and allows building without nspr in the source tree 
-    - nss-3.55-standalone-1.patch
+    # Build against the conda nspr (no in-tree nspr) and generate nss.pc + nss-config
+    - patches/0001-Build-against-external-nspr-and-generate-nss.pc.patch
 
 build:
   number: 0
@@ -28,8 +28,8 @@ requirements:
     - pkg-config
     - gtest
   host:
-    # NSS >=3.126 requires NSPR >=4.39 (see release notes). The standalone patch
-    # writes the same floor into nss.pc from upstream's nspr-version.txt.
+    # NSS >=3.126 requires NSPR >=4.39 (see release notes). Patch 0001 writes
+    # the same floor into nss.pc from upstream's nspr-version.txt.
     - nspr {{ nspr }}
     - sqlite {{ sqlite }}
     - zlib {{ zlib }}
