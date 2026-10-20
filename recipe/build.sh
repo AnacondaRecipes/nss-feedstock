@@ -60,6 +60,14 @@ install -v -m755 ${FOLDER}/bin/{certutil,nss-config,pk12util} "${PREFIX}/bin"
 
 install -v -m644 ${FOLDER}/lib/pkgconfig/nss.pc  "${PREFIX}/lib/pkgconfig"
 
+# Test-only (build tree, not shipped): dist tools load libs via @executable_path, and SIP
+# strips DYLD_LIBRARY_PATH from gtest_db.sh (#!/bin/bash), so certutil can't create test DBs
+if [[ "${target_platform}" == osx-* ]]; then
+    for lib in "${FOLDER}"/lib/*.dylib; do
+        ln -sf "../lib/$(basename "$lib")" "${FOLDER}/bin/"
+    done
+fi
+
 export HOST=nss
 export DOMSUF=local
 export NSS_CYCLES=standard
