@@ -17,6 +17,9 @@ build:
   skip: true  # [win]
   run_exports:
     - {{ pin_subpackage('nss', max_pin='x') }}
+  # C++ is only used for the build-time gtests; no shipped binary links libstdc++/libc++
+  ignore_run_exports_from:
+    - {{ compiler('cxx') }}
 
 requirements:
   build:
