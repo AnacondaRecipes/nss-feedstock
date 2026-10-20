@@ -31,9 +31,9 @@ make -j1 BUILD_OPT=1 \
     NSS_USE_SYSTEM_SQLITE=1 \
     NSDISTMODE=copy \
     NO_MDUPDATE=1 \
-    NSS_DISABLE_GTESTS=0 \
     NSS_GYP_PREFIX=$PREFIX \
     NS_USE_GCC=$USE_GCC \
+    CCC="$CXX" \
     MACOS_SDK_DIR=$MACOS_SDK_DIR \
     $MACOS_CROSS_ARGS \
     all latest
@@ -44,7 +44,11 @@ FOLDER=$(cat latest)
 if [[ "${FOLDER}" == "" ]]; then
     exit 1
 fi
-install -v -m755 ${FOLDER}/lib/*${SHLIB_EXT}  "${PREFIX}/lib"
+# libpkcs11testmodule is a gtest-only PKCS#11 module; don't ship it
+for lib in ${FOLDER}/lib/*${SHLIB_EXT}; do
+    [[ "$(basename "$lib")" == libpkcs11testmodule* ]] && continue
+    install -v -m755 "$lib" "${PREFIX}/lib"
+done
 if [[ "${CONDA_BUILD_CROSS_COMPILATION}" != "1" ]]; then
     install -v -m644 ${FOLDER}/lib/*.chk "${PREFIX}/lib"
 fi
@@ -60,5 +64,6 @@ export HOST=nss
 export DOMSUF=local
 export NSS_CYCLES=standard
 
+# Default gtests.sh suite list; none touch the network (ssl_gtest is not run here)
 cd $SRC_DIR/nss/tests/gtests
 ./gtests.sh
