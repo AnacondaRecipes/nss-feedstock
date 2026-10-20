@@ -28,7 +28,8 @@ requirements:
     - pkg-config
     - gtest
   host:
-    # NSS >=3.126 requires NSPR >=4.39 (see release notes)
+    # NSS >=3.126 requires NSPR >=4.39 (see release notes). The standalone patch
+    # writes the same floor into nss.pc from upstream's nspr-version.txt.
     - nspr {{ nspr }}
     - sqlite {{ sqlite }}
     - zlib {{ zlib }}

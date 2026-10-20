@@ -1,21 +1,63 @@
-Submitted By:            Xi Ruoyao <xry111_AT_mengyan1223_DOT_wang>
-Date:                    2020-05-31
-Initial Package Version: 3.12.4
-Upstream Status:         Not applicable
-Origin:                  Self, rediffed for nss-3.53.
-Description:             Adds auto-generated nss.pc and nss-config script, and
-                         allows building without nspr in the source tree.
-                         For 3.40.1, Requires: updated to nspr >= 4.20.
-                         For 3.46.1, Requires: updated to nspr >= 4.21.
-                         For 3.48, Requires: updated to nspr >= 4.24.
-                         For 3.51.1, Requires: updated to nspr >= 4.25.
-                         For 3.54, Requires: updated to nspr >= 4.26.
-                         For 3.55, Requires: updated to nspr >= 4.27.
+From bc0d233e94c01f218ddba589f73655a64837c0ca Mon Sep 17 00:00:00 2001
+From: Jamie Robertson <jamierobertsongames@gmail.com>
+Date: Tue, 20 Oct 2026 16:19:24 +0100
+Subject: [PATCH] Add nss.pc/nss-config generation and build without in-tree
+ nspr
 
-diff -Nuar nss-3.53.orig/nss/config/Makefile nss-3.53/nss/config/Makefile
---- nss-3.53.orig/nss/config/Makefile	1970-01-01 08:00:00.000000000 +0800
-+++ nss-3.53/nss/config/Makefile	2020-05-31 13:48:14.423566855 +0800
-@@ -0,0 +1,40 @@
+Adds auto-generated nss.pc and nss-config script, and allows building
+against an external (conda) nspr instead of the nspr source tree.
+
+Based on the BLFS nss-standalone patch by Xi Ruoyao (2020-05-31,
+rediffed for nss-3.53), which hardcoded the Requires: nspr floor and had
+to be bumped by hand every release (last bumped to nspr >= 4.27 for 3.55).
+
+The nss.pc Requires: nspr floor is now read from the first line of
+upstream's automation/release/nspr-version.txt (4.39 for 3.131.1), so it
+tracks the NSPR version upstream requires; the build fails if that file
+is missing or empty.
+---
+ nss/Makefile             |   4 +-
+ nss/config/Makefile      |  44 +++++++++++
+ nss/config/nss-config.in | 153 +++++++++++++++++++++++++++++++++++++++
+ nss/config/nss.pc.in     |  12 +++
+ nss/manifest.mn          |   2 +-
+ 5 files changed, 212 insertions(+), 3 deletions(-)
+ create mode 100644 nss/config/Makefile
+ create mode 100644 nss/config/nss-config.in
+ create mode 100644 nss/config/nss.pc.in
+
+diff --git a/nss/Makefile b/nss/Makefile
+index 5ce486d..f738a9b 100644
+--- a/nss/Makefile
++++ b/nss/Makefile
+@@ -4,6 +4,8 @@
+ # License, v. 2.0. If a copy of the MPL was not distributed with this
+ # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ 
++default: nss_build_all
++
+ #######################################################################
+ # (1) Include initial platform-independent assignments (MANDATORY).   #
+ #######################################################################
+@@ -48,12 +50,10 @@ include $(CORE_DEPTH)/coreconf/rules.mk
+ #######################################################################
+ 
+ nss_build_all:
+-	$(MAKE) build_nspr
+ 	$(MAKE) all
+ 	$(MAKE) latest
+ 
+ nss_clean_all:
+-	$(MAKE) clobber_nspr
+ 	$(MAKE) clobber
+ 
+ NSPR_CONFIG_STATUS = $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME)/config.status
+diff --git a/nss/config/Makefile b/nss/config/Makefile
+new file mode 100644
+index 0000000..ea15c9a
+--- /dev/null
++++ b/nss/config/Makefile
+@@ -0,0 +1,44 @@
 +CORE_DEPTH = ..
 +DEPTH      = ..
 +
@@ -24,12 +66,15 @@ diff -Nuar nss-3.53.orig/nss/config/Makefile nss-3.53/nss/config/Makefile
 +NSS_MAJOR_VERSION = `grep "NSS_VMAJOR" ../lib/nss/nss.h | awk '{print $$3}'`
 +NSS_MINOR_VERSION = `grep "NSS_VMINOR" ../lib/nss/nss.h | awk '{print $$3}'`
 +NSS_PATCH_VERSION = `grep "NSS_VPATCH" ../lib/nss/nss.h | awk '{print $$3}'`
++# Minimum NSPR: first line of upstream's automation/release/nspr-version.txt
++NSPR_MIN_VERSION = `head -n 1 ../automation/release/nspr-version.txt`
 +PREFIX = /usr
 +
 +all: export libs
 +
 +export:
 +	# Create the nss.pc file
++	test -n "$(NSPR_MIN_VERSION)" || { echo "nspr-version.txt missing or empty" >&2; exit 1; }
 +	mkdir -p $(DIST)/lib/pkgconfig
 +	sed -e "s,@prefix@,$(PREFIX)," \
 +	    -e "s,@exec_prefix@,\$${prefix}," \
@@ -38,6 +83,7 @@ diff -Nuar nss-3.53.orig/nss/config/Makefile nss-3.53/nss/config/Makefile
 +	    -e "s,@NSS_MAJOR_VERSION@,$(NSS_MAJOR_VERSION),g" \
 +	    -e "s,@NSS_MINOR_VERSION@,$(NSS_MINOR_VERSION)," \
 +	    -e "s,@NSS_PATCH_VERSION@,$(NSS_PATCH_VERSION)," \
++	    -e "s,@NSPR_MIN_VERSION@,$(NSPR_MIN_VERSION)," \
 +	    nss.pc.in > nss.pc
 +	chmod 0644 nss.pc
 +	ln -sf ../../../../nss/config/nss.pc $(DIST)/lib/pkgconfig
@@ -56,9 +102,11 @@ diff -Nuar nss-3.53.orig/nss/config/Makefile nss-3.53/nss/config/Makefile
 +
 +dummy: all export libs
 +
-diff -Nuar nss-3.53.orig/nss/config/nss-config.in nss-3.53/nss/config/nss-config.in
---- nss-3.53.orig/nss/config/nss-config.in	1970-01-01 08:00:00.000000000 +0800
-+++ nss-3.53/nss/config/nss-config.in	2020-05-31 13:48:14.424566860 +0800
+diff --git a/nss/config/nss-config.in b/nss/config/nss-config.in
+new file mode 100644
+index 0000000..aebba3a
+--- /dev/null
++++ b/nss/config/nss-config.in
 @@ -0,0 +1,153 @@
 +#!/bin/sh
 +
@@ -213,9 +261,11 @@ diff -Nuar nss-3.53.orig/nss/config/nss-config.in nss-3.53/nss/config/nss-config
 +      echo $libdirs
 +fi      
 +
-diff -Nuar nss-3.53.orig/nss/config/nss.pc.in nss-3.53/nss/config/nss.pc.in
---- nss-3.53.orig/nss/config/nss.pc.in	1970-01-01 08:00:00.000000000 +0800
-+++ nss-3.53/nss/config/nss.pc.in	2020-05-31 13:48:14.424566860 +0800
+diff --git a/nss/config/nss.pc.in b/nss/config/nss.pc.in
+new file mode 100644
+index 0000000..031868c
+--- /dev/null
++++ b/nss/config/nss.pc.in
 @@ -0,0 +1,12 @@
 +prefix=@prefix@
 +exec_prefix=@exec_prefix@
@@ -225,44 +275,20 @@ diff -Nuar nss-3.53.orig/nss/config/nss.pc.in nss-3.53/nss/config/nss.pc.in
 +Name: NSS
 +Description: Network Security Services
 +Version: @NSS_MAJOR_VERSION@.@NSS_MINOR_VERSION@.@NSS_PATCH_VERSION@
-+Requires: nspr >= 4.27
++Requires: nspr >= @NSPR_MIN_VERSION@
 +Libs: -L@libdir@ -lnss@NSS_MAJOR_VERSION@ -lnssutil@NSS_MAJOR_VERSION@ -lsmime@NSS_MAJOR_VERSION@ -lssl@NSS_MAJOR_VERSION@ -lsoftokn@NSS_MAJOR_VERSION@
 +Cflags: -I${includedir}
 +
-diff -Nuar nss-3.53.orig/nss/Makefile nss-3.53/nss/Makefile
---- nss-3.53.orig/nss/Makefile	2020-05-30 04:34:42.000000000 +0800
-+++ nss-3.53/nss/Makefile	2020-05-31 13:48:51.500733022 +0800
-@@ -4,6 +4,8 @@
- # License, v. 2.0. If a copy of the MPL was not distributed with this
- # file, You can obtain one at http://mozilla.org/MPL/2.0/.
- 
-+default: nss_build_all
-+
- #######################################################################
- # (1) Include initial platform-independent assignments (MANDATORY).   #
- #######################################################################
-@@ -48,12 +50,10 @@
- #######################################################################
- 
- nss_build_all:
--	$(MAKE) build_nspr
- 	$(MAKE) all
- 	$(MAKE) latest
- 
- nss_clean_all:
--	$(MAKE) clobber_nspr
- 	$(MAKE) clobber
- 
- NSPR_CONFIG_STATUS = $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME)/config.status
-diff -Nuar nss-3.53.orig/nss/manifest.mn nss-3.53/nss/manifest.mn
---- nss-3.53.orig/nss/manifest.mn	2020-05-30 04:34:42.000000000 +0800
-+++ nss-3.53/nss/manifest.mn	2020-05-31 13:48:30.652640413 +0800
-@@ -10,7 +10,7 @@
+diff --git a/nss/manifest.mn b/nss/manifest.mn
+index fbc420a..b983d88 100644
+--- a/nss/manifest.mn
++++ b/nss/manifest.mn
+@@ -10,7 +10,7 @@ IMPORTS =	nspr20/v4.8 \
  
  RELEASE = nss
  
 -DIRS = coreconf lib cmd cpputil gtests
 +DIRS = coreconf lib cmd cpputil gtests config
  
- lib: coreconf
- cmd: lib
+ HAVE_ALL_TARGET := 1
+ 
