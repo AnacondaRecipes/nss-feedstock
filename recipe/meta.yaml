@@ -9,8 +9,8 @@ source:
   url: https://ftp.mozilla.org/pub/security/{{ name }}/releases/NSS_{{ version.replace('.', '_')}}_RTM/src/{{ name }}-{{ version }}.tar.gz
   sha256: b1dbc1d9e7f3f8455dfb6d58ec8f7229d8a8450c629a9e69ef2ef6081f359056
   patches:
-    # Build against the conda nspr (no in-tree nspr) and generate nss.pc + nss-config
-    - patches/0001-Build-against-external-nspr-and-generate-nss.pc.patch
+    # The make build doesn't produce nss.pc / nss-config; generate them (from BLFS)
+    - patches/0001-Generate-nss.pc-and-nss-config-for-the-make-build.patch
 
 build:
   number: 0
