@@ -1,5 +1,5 @@
 {% set name = "nss" %}
-{% set version = "3.125" %}
+{% set version = "3.131.1" %}
 
 package:
   name: {{ name }}
@@ -7,29 +7,33 @@ package:
 
 source:
   url: https://ftp.mozilla.org/pub/security/{{ name }}/releases/NSS_{{ version.replace('.', '_')}}_RTM/src/{{ name }}-{{ version }}.tar.gz
-  sha256: 1ad541f10da7c58dec01f540ecc44d28cbbc033f741a57473de5a0893d91606d
+  sha256: b1dbc1d9e7f3f8455dfb6d58ec8f7229d8a8450c629a9e69ef2ef6081f359056
   patches:
-    # Adds auto-generated nss.pc and nss-config script, and allows building without nspr in the source tree 
-    - nss-3.55-standalone-1.patch
-    # Remove simd acceleration on osx-arm64
-    - remove_hw_accel_osxarm64.patch  # [osx and arm64]
+    # The make build doesn't produce nss.pc / nss-config; generate them (from BLFS)
+    - patches/0001-Generate-nss.pc-and-nss-config-for-the-make-build.patch
 
 build:
   number: 0
   skip: true  # [win]
   run_exports:
     - {{ pin_subpackage('nss', max_pin='x') }}
+  # C++ is only used for the build-time gtests; no shipped binary links libstdc++/libc++
+  ignore_run_exports_from:
+    - {{ compiler('cxx') }}
 
 requirements:
   build:
     - {{ stdlib('c') }}
     - {{ compiler('c') }}
+    - {{ compiler('cxx') }}  # gtests (C++), run in build.sh
     - autoconf
     - cmake
     - make  # [unix]
     - pkg-config
     - gtest
   host:
+    # NSS >=3.126 requires NSPR >=4.39 (see release notes). Patch 0001 writes
+    # the same floor into nss.pc from upstream's nspr-version.txt.
     - nspr {{ nspr }}
     - sqlite {{ sqlite }}
     - zlib {{ zlib }}
